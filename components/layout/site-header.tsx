@@ -1,8 +1,9 @@
 "use client"
 
+import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Menu } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -20,6 +21,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { authClient } from "@/lib/auth-client"
 
 const NAV_LINKS = [
   { href: "/jobs", label: "Browse Jobs" },
@@ -27,8 +29,38 @@ const NAV_LINKS = [
   { href: "/pricing", label: "Pricing" },
 ] as const
 
+function getInitials(value: string) {
+  const parts = value.trim().split(/\s+/).filter(Boolean)
+
+  if (parts.length === 0) return "?"
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
 export function SiteHeader() {
   const pathname = usePathname()
+  const router = useRouter()
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
+  const { data: session, isPending } = authClient.useSession()
+
+  const user = session?.user
+  const displayName = user?.name?.trim() || user?.email || ""
+
+  async function handleSignOut() {
+    if (signingOut) return
+
+    setSigningOut(true)
+
+    try {
+      await authClient.signOut()
+      setMobileOpen(false)
+      router.refresh()
+    } finally {
+      setSigningOut(false)
+    }
+  }
 
   return (
     <header className="sticky top-4 z-40 px-4 sm:px-6 lg:px-8">
@@ -71,25 +103,58 @@ export function SiteHeader() {
 
           <span className="h-5 w-px bg-white/20" aria-hidden="true" />
 
-          <div className="flex shrink-0 items-center gap-4">
-            <Link
-              href="/sign-in"
-              className="text-sm font-medium text-[#5b8cff] transition-colors hover:text-[#7aa8ff]"
-            >
-              Sign In
-            </Link>
-            <Button
-              size="sm"
-              className="bg-[#6366f1] text-white hover:bg-[#5558e6]"
-              nativeButton={false}
-              render={<Link href="/sign-up">Get Started</Link>}
-            />
+          <div className="flex shrink-0 items-center gap-3">
+            {isPending ? (
+              <span
+                aria-hidden="true"
+                className="h-8 w-32 animate-pulse rounded-full bg-white/10"
+              />
+            ) : user ? (
+              <>
+                <span className="flex items-center gap-2">
+                  <span
+                    aria-hidden="true"
+                    className="flex size-8 items-center justify-center rounded-full bg-[#6366f1]/20 text-[11px] font-semibold text-[#c7c8ff] ring-1 ring-[#6366f1]/40"
+                  >
+                    {getInitials(displayName)}
+                  </span>
+                  <span className="max-w-40 truncate text-sm font-medium text-white/80">
+                    {displayName}
+                  </span>
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSignOut}
+                  disabled={signingOut}
+                  className="text-white/60 hover:bg-white/10 hover:text-white"
+                >
+                  {signingOut ? "Signing out…" : "Sign Out"}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/sign-in"
+                  className="text-sm font-medium text-[#5b8cff] transition-colors hover:text-[#7aa8ff]"
+                >
+                  Sign In
+                </Link>
+                <Button
+                  size="sm"
+                  className="bg-[#6366f1] text-white hover:bg-[#5558e6]"
+                  nativeButton={false}
+                  render={<Link href="/sign-up">Get Started</Link>}
+                />
+              </>
+            )}
           </div>
         </div>
 
         {/* Mobile trigger */}
         <div className="shrink-0 md:hidden">
-          <Sheet>
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger
               render={
                 <Button
@@ -130,6 +195,7 @@ export function SiteHeader() {
                     <Link
                       key={link.href}
                       href={link.href}
+                      onClick={() => setMobileOpen(false)}
                       aria-current={isActive ? "page" : undefined}
                       className={
                         isActive
@@ -146,18 +212,63 @@ export function SiteHeader() {
               <Separator className="my-2 bg-white/10" />
 
               <div className="flex flex-col gap-3 px-4 pb-4">
-                <Link
-                  href="/sign-in"
-                  className="text-center text-sm font-medium text-[#5b8cff] transition-colors hover:text-[#7aa8ff]"
-                >
-                  Sign In
-                </Link>
-                <Button
-                  size="sm"
-                  className="w-full bg-[#6366f1] text-white hover:bg-[#5558e6]"
-                  nativeButton={false}
-                  render={<Link href="/sign-up">Get Started</Link>}
-                />
+                {isPending ? (
+                  <span
+                    aria-hidden="true"
+                    className="h-10 w-full animate-pulse rounded-lg bg-white/10"
+                  />
+                ) : user ? (
+                  <>
+                    <div className="flex items-center gap-2.5 rounded-lg bg-white/5 px-3 py-2.5">
+                      <span
+                        aria-hidden="true"
+                        className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#6366f1]/20 text-xs font-semibold text-[#c7c8ff] ring-1 ring-[#6366f1]/40"
+                      >
+                        {getInitials(displayName)}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium text-white">
+                          {displayName}
+                        </span>
+                        <span className="block truncate text-xs text-white/45">
+                          {user.email}
+                        </span>
+                      </span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleSignOut}
+                      disabled={signingOut}
+                      className="w-full border-white/15 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                    >
+                      {signingOut ? "Signing out…" : "Sign Out"}
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/sign-in"
+                      onClick={() => setMobileOpen(false)}
+                      className="text-center text-sm font-medium text-[#5b8cff] transition-colors hover:text-[#7aa8ff]"
+                    >
+                      Sign In
+                    </Link>
+                    <Button
+                      size="sm"
+                      className="w-full bg-[#6366f1] text-white hover:bg-[#5558e6]"
+                      nativeButton={false}
+                      render={
+                        <Link
+                          href="/sign-up"
+                          onClick={() => setMobileOpen(false)}
+                        >
+                          Get Started
+                        </Link>
+                      }
+                    />
+                  </>
+                )}
               </div>
             </SheetContent>
           </Sheet>

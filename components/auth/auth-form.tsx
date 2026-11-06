@@ -1,8 +1,10 @@
 "use client"
 
+import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { Building2, UserRound } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Building2, Loader2, UserRound } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -15,6 +17,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { authClient } from "@/lib/auth-client"
 
 type AuthMode = "sign-in" | "sign-up"
 
@@ -48,15 +51,105 @@ const ROLES = [
   { value: "recruiter", label: "Recruiter", icon: Building2 },
 ] as const
 
+const ERROR_MESSAGES: Record<string, string> = {
+  INVALID_EMAIL_OR_PASSWORD: "Incorrect email or password. Please try again.",
+  INVALID_EMAIL: "That email address doesn't look right.",
+  USER_ALREADY_EXISTS:
+    "An account with this email already exists. Try signing in.",
+  USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL:
+    "An account with this email already exists. Try signing in.",
+  PASSWORD_TOO_SHORT: "Password must be at least 8 characters long.",
+  PASSWORD_TOO_LONG: "That password is too long.",
+}
+
+function getAuthErrorMessage(error: { code?: string; message?: string }) {
+  if (error.code && ERROR_MESSAGES[error.code]) {
+    return ERROR_MESSAGES[error.code]
+  }
+
+  return error.message || "Something went wrong. Please try again."
+}
+
 export function AuthForm({ mode }: { mode: AuthMode }) {
   const copy = COPY[mode]
   const isSignUp = mode === "sign-up"
+  const router = useRouter()
 
-  // TODO: wire to Better Auth.
-  //   sign-in: authClient.signIn.email({ email, password, rememberMe, callbackURL: "/" })
-  //   sign-up: authClient.signUp.email({ name, email, password, role, callbackURL: "/" })
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+
+    if (pending) return
+
+    setError(null)
+
+    const formData = new FormData(event.currentTarget)
+    const email = String(formData.get("email") ?? "").trim()
+    const password = String(formData.get("password") ?? "")
+    const rememberMe = formData.get("rememberMe") === "on"
+
+    if (!email || !password) {
+      setError("Email and password are required.")
+      return
+    }
+
+    setPending(true)
+
+    try {
+      if (isSignUp) {
+        const name = String(formData.get("name") ?? "").trim()
+        const confirmPassword = String(formData.get("confirmPassword") ?? "")
+        const role =
+          formData.get("role") === "recruiter" ? "recruiter" : "seeker"
+
+        if (!name) {
+          setError("Please enter your full name.")
+          return
+        }
+
+        if (password.length < 8) {
+          setError("Password must be at least 8 characters long.")
+          return
+        }
+
+        if (password !== confirmPassword) {
+          setError("Passwords do not match.")
+          return
+        }
+
+        const { error: signUpError } = await authClient.signUp.email({
+          name,
+          email,
+          password,
+          role,
+        })
+
+        if (signUpError) {
+          setError(getAuthErrorMessage(signUpError))
+          return
+        }
+      } else {
+        const { error: signInError } = await authClient.signIn.email({
+          email,
+          password,
+          rememberMe,         
+        })
+
+        if (signInError) {
+          setError(getAuthErrorMessage(signInError))
+          return
+        }
+      }
+ 
+      router.push("/")
+      router.refresh()
+    } catch { 
+      setError("Could not reach the server. Please try again.")
+    } finally {
+      setPending(false)
+    }
   }
 
   return (
@@ -124,6 +217,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               onSubmit={handleSubmit}
               className="flex flex-col gap-4"
               noValidate={false}
+              aria-busy={pending}
             >
               {isSignUp && (
                 <div className="flex flex-col gap-2">
@@ -272,11 +366,31 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                 </div>
               )}
 
+              {error && (
+                <p
+                  role="alert"
+                  className="rounded-xl border border-red-400/25 bg-red-500/10 px-3.5 py-2.5 text-sm text-red-300"
+                >
+                  {error}
+                </p>
+              )}
+
               <Button
                 type="submit"
-                className="mt-1 h-11 w-full rounded-xl bg-[#6366f1] text-sm font-medium text-white hover:bg-[#5558e6]"
+                disabled={pending}
+                className="mt-1 h-11 w-full rounded-xl bg-[#6366f1] text-sm font-medium text-white hover:bg-[#5558e6] disabled:opacity-70"
               >
-                {copy.submit}
+                {pending ? (
+                  <>
+                    <Loader2
+                      className="size-4 animate-spin"
+                      aria-hidden="true"
+                    />
+                    {isSignUp ? "Creating account…" : "Signing in…"}
+                  </>
+                ) : (
+                  copy.submit
+                )}
               </Button>
             </form>
 
