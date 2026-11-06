@@ -4,7 +4,7 @@ import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Building2, Loader2, UserRound } from "lucide-react"
+import { Building2, Loader2, ShieldCheck, UserRound } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -18,6 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { authClient } from "@/lib/auth-client"
+import type { UserRole } from "@/lib/roles"
 
 type AuthMode = "sign-in" | "sign-up"
 
@@ -49,6 +50,7 @@ const COPY = {
 const ROLES = [
   { value: "seeker", label: "Job Seeker", icon: UserRound },
   { value: "recruiter", label: "Recruiter", icon: Building2 },
+  { value: "admin", label: "Admin", icon: ShieldCheck },
 ] as const
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -60,6 +62,7 @@ const ERROR_MESSAGES: Record<string, string> = {
     "An account with this email already exists. Try signing in.",
   PASSWORD_TOO_SHORT: "Password must be at least 8 characters long.",
   PASSWORD_TOO_LONG: "That password is too long.",
+  INVALID_ADMIN_INVITE: "A valid admin invite code is required.",
 }
 
 function getAuthErrorMessage(error: { code?: string; message?: string }) {
@@ -70,6 +73,10 @@ function getAuthErrorMessage(error: { code?: string; message?: string }) {
   return error.message || "Something went wrong. Please try again."
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
 export function AuthForm({ mode }: { mode: AuthMode }) {
   const copy = COPY[mode]
   const isSignUp = mode === "sign-up"
@@ -77,6 +84,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
 
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [selectedRole, setSelectedRole] = useState<UserRole>("seeker")
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -101,8 +109,10 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
       if (isSignUp) {
         const name = String(formData.get("name") ?? "").trim()
         const confirmPassword = String(formData.get("confirmPassword") ?? "")
-        const role =
-          formData.get("role") === "recruiter" ? "recruiter" : "seeker"
+        const role = selectedRole
+        const adminInviteCode = String(
+          formData.get("adminInviteCode") ?? ""
+        ).trim()
 
         if (!name) {
           setError("Please enter your full name.")
@@ -119,22 +129,38 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           return
         }
 
-        const { error: signUpError } = await authClient.signUp.email({
-          name,
-          email,
-          password,
-          role,
+        const response = await fetch("/api/auth/sign-up/email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            email,
+            password,
+            role,
+            ...(role === "admin" ? { adminInviteCode } : {}),
+          }),
         })
 
-        if (signUpError) {
-          setError(getAuthErrorMessage(signUpError))
+        if (!response.ok) {
+          const result: unknown = await response.json()
+          const responseError = isRecord(result)
+            ? {
+                code: typeof result.code === "string" ? result.code : undefined,
+                message:
+                  typeof result.message === "string"
+                    ? result.message
+                    : undefined,
+              }
+            : {}
+
+          setError(getAuthErrorMessage(responseError))
           return
         }
       } else {
         const { error: signInError } = await authClient.signIn.email({
           email,
           password,
-          rememberMe,         
+          rememberMe,
         })
 
         if (signInError) {
@@ -142,10 +168,10 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           return
         }
       }
- 
+
       router.push("/")
       router.refresh()
-    } catch { 
+    } catch {
       setError("Could not reach the server. Please try again.")
     } finally {
       setPending(false)
@@ -295,7 +321,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                     <legend className="mb-2 text-sm font-medium text-white/70">
                       I&apos;m joining as
                     </legend>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-3 gap-2">
                       {ROLES.map((role) => (
                         <label
                           key={role.value}
@@ -305,7 +331,8 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                             type="radio"
                             name="role"
                             value={role.value}
-                            defaultChecked={role.value === "seeker"}
+                            checked={selectedRole === role.value}
+                            onChange={() => setSelectedRole(role.value)}
                             className="peer sr-only"
                           />
                           <span className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 text-sm text-white/60 transition-colors peer-checked:border-[#6366f1]/60 peer-checked:bg-[#6366f1]/15 peer-checked:text-white peer-focus-visible:ring-3 peer-focus-visible:ring-[#6366f1]/30">
@@ -316,6 +343,27 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                       ))}
                     </div>
                   </fieldset>
+                  {selectedRole === "admin" && (
+                    <div className="flex flex-col gap-2">
+                      <Label
+                        htmlFor="admin-invite-code"
+                        className="text-white/70"
+                      >
+                        Admin invite code
+                      </Label>
+                      <Input
+                        id="admin-invite-code"
+                        name="adminInviteCode"
+                        type="password"
+                        autoComplete="off"
+                        required
+                        className={inputClass}
+                      />
+                      <p className="text-xs text-white/35">
+                        Admin signup requires an invite code.
+                      </p>
+                    </div>
+                  )}
                 </>
               )}
 

@@ -1,8 +1,29 @@
 import { betterAuth } from "better-auth"
+import { APIError } from "better-auth/api"
 import { mongodbAdapter } from "@better-auth/mongo-adapter"
 import { MongoClient } from "mongodb"
+import { createHash, timingSafeEqual } from "node:crypto"
+
+import { isUserRole, USER_ROLES } from "@/lib/roles"
 
 const MONGO_DB_NAME = process.env.MONGO_DB_NAME ?? "hireloopdb"
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+function isValidAdminInviteCode(value: unknown) {
+  const expectedCode = process.env.ADMIN_SIGNUP_INVITE_CODE
+
+  if (typeof value !== "string" || !expectedCode) {
+    return false
+  }
+
+  const providedHash = createHash("sha256").update(value).digest()
+  const expectedHash = createHash("sha256").update(expectedCode).digest()
+
+  return timingSafeEqual(providedHash, expectedHash)
+}
 
 /**
  * Reuse one MongoClient across dev hot reloads. Next.js re-evaluates modules
@@ -53,10 +74,73 @@ export const auth = betterAuth({
   user: {
     additionalFields: {
       role: {
-        type: "string",
+        type: [...USER_ROLES],
         required: false,
         defaultValue: "seeker",
         input: true,
+      },
+    },
+  },
+
+  databaseHooks: {
+    user: {
+      create: {
+        async before(user, context) {
+          if (context?.path !== "/sign-up/email") {
+            if (user.role !== undefined && user.role !== "seeker") {
+              throw APIError.from("BAD_REQUEST", {
+                code: "INVALID_SIGNUP_ROLE",
+                message: "Invalid signup role.",
+              })
+            }
+
+            return
+          }
+
+          if (!isRecord(context.body)) {
+            return
+          }
+
+          const requestedRole = context.body.role
+
+          if (requestedRole === undefined) {
+            return
+          }
+
+          if (!isUserRole(requestedRole)) {
+            throw APIError.from("BAD_REQUEST", {
+              code: "INVALID_SIGNUP_ROLE",
+              message: "Invalid signup role.",
+            })
+          }
+
+          if (
+            requestedRole === "admin" &&
+            !isValidAdminInviteCode(context.body.adminInviteCode)
+          ) {
+            throw APIError.from("BAD_REQUEST", {
+              code: "INVALID_ADMIN_INVITE",
+              message: "A valid admin invite code is required.",
+            })
+          }
+
+          return {
+            data: {
+              ...user,
+              role: requestedRole,
+            },
+          }
+        },
+      },
+      update: {
+        async before(user) {
+          if (Object.prototype.hasOwnProperty.call(user, "role")) {
+            throw APIError.from("BAD_REQUEST", {
+              code: "ROLE_CHANGE_NOT_ALLOWED",
+              message: "Account roles cannot be changed after signup.",
+            })
+          }
+        },
       },
     },
   },
