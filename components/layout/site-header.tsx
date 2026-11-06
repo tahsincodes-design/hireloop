@@ -69,14 +69,11 @@ export function SiteHeader() {
             </NavigationMenuList>
           </NavigationMenu>
 
-          <span
-            className="h-5 w-px bg-white/20"
-            aria-hidden="true"
-          />
+          <span className="h-5 w-px bg-white/20" aria-hidden="true" />
 
           <div className="flex shrink-0 items-center gap-4">
             <Link
-              href="/login"
+              href="/sign-in"
               className="text-sm font-medium text-[#5b8cff] transition-colors hover:text-[#7aa8ff]"
             >
               Sign In
@@ -85,7 +82,7 @@ export function SiteHeader() {
               size="sm"
               className="bg-[#6366f1] text-white hover:bg-[#5558e6]"
               nativeButton={false}
-              render={<Link href="/jobs">Get Started</Link>}
+              render={<Link href="/sign-up">Get Started</Link>}
             />
           </div>
         </div>
@@ -150,7 +147,7 @@ export function SiteHeader() {
 
               <div className="flex flex-col gap-3 px-4 pb-4">
                 <Link
-                  href="/login"
+                  href="/sign-in"
                   className="text-center text-sm font-medium text-[#5b8cff] transition-colors hover:text-[#7aa8ff]"
                 >
                   Sign In
@@ -159,7 +156,7 @@ export function SiteHeader() {
                   size="sm"
                   className="w-full bg-[#6366f1] text-white hover:bg-[#5558e6]"
                   nativeButton={false}
-                  render={<Link href="/jobs">Get Started</Link>}
+                  render={<Link href="/sign-up">Get Started</Link>}
                 />
               </div>
             </SheetContent>
