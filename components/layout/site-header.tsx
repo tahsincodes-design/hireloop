@@ -84,6 +84,7 @@ export function SiteHeader() {
             <Button
               size="sm"
               className="bg-[#6366f1] text-white hover:bg-[#5558e6]"
+              nativeButton={false}
               render={<Link href="/jobs">Get Started</Link>}
             />
           </div>
@@ -157,6 +158,7 @@ export function SiteHeader() {
                 <Button
                   size="sm"
                   className="w-full bg-[#6366f1] text-white hover:bg-[#5558e6]"
+                  nativeButton={false}
                   render={<Link href="/jobs">Get Started</Link>}
                 />
               </div>
