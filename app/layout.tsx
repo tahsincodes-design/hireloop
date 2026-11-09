@@ -3,9 +3,9 @@ import { Geist, Geist_Mono, Manrope } from "next/font/google"
 import "./globals.css"
 import { SiteHeader } from "@/components/layout/site-header"
 import { ThemeProvider } from "@/components/theme-provider"
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils"
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'})
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" })
 
 const fontMono = Geist_Mono({
   subsets: ["latin"],
@@ -27,15 +27,16 @@ export default function RootLayout({
       lang="en"
       suppressHydrationWarning
       className={cn(
-        "antialiased",
+        "dark antialiased",
         fontMono.variable,
         manrope.variable,
         "font-sans",
         geist.variable
       )}
+      style={{ colorScheme: "dark" }}
     >
-      <body className="bg-[#05050a]">
-        <ThemeProvider>
+      <body className="bg-[#05050a] text-white">
+        <ThemeProvider defaultTheme="dark" enableSystem={false}>
           <SiteHeader />
           {children}
         </ThemeProvider>

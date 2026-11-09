@@ -62,6 +62,9 @@ export function SiteHeader() {
     }
   }
 
+  // The dashboard renders its own authenticated shell and sidebar.
+  if (pathname.startsWith("/dashboard")) return null
+
   return (
     <header className="sticky top-4 z-40 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-4 rounded-2xl border border-white/10 bg-[#0c0c11]/95 px-4 shadow-lg shadow-black/20 backdrop-blur-md sm:h-16 sm:px-6">
@@ -122,6 +125,12 @@ export function SiteHeader() {
                     {displayName}
                   </span>
                 </span>
+                <Link
+                  href="/dashboard"
+                  className="text-sm font-medium text-[#8b8bff] transition-colors hover:text-white"
+                >
+                  Dashboard
+                </Link>
                 <Button
                   type="button"
                   variant="ghost"
@@ -235,6 +244,19 @@ export function SiteHeader() {
                         </span>
                       </span>
                     </div>
+                    <Button
+                      variant="outline"
+                      nativeButton={false}
+                      className="w-full border-white/15 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                      render={
+                        <Link
+                          href="/dashboard"
+                          onClick={() => setMobileOpen(false)}
+                        >
+                          Open dashboard
+                        </Link>
+                      }
+                    />
                     <Button
                       type="button"
                       variant="outline"

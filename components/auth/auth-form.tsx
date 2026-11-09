@@ -169,7 +169,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         }
       }
 
-      router.push("/")
+      router.push("/dashboard")
       router.refresh()
     } catch {
       setError("Could not reach the server. Please try again.")

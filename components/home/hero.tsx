@@ -45,11 +45,11 @@ export function Hero() {
           </Badge>
         </div>
 
-        <h1 className="mx-auto mt-6 max-w-4xl text-balance text-center font-manrope text-4xl leading-[1.05] font-extrabold tracking-tight text-white sm:text-6xl lg:text-7xl">
+        <h1 className="mx-auto mt-6 max-w-4xl text-center font-manrope text-4xl leading-[1.05] font-extrabold tracking-tight text-balance text-white sm:text-6xl lg:text-7xl">
           Find Your Dream Job Today
         </h1>
 
-        <p className="mx-auto mt-5 max-w-2xl text-pretty text-center text-sm leading-relaxed text-white/55 sm:text-base lg:text-lg">
+        <p className="mx-auto mt-5 max-w-2xl text-center text-sm leading-relaxed text-pretty text-white/55 sm:text-base lg:text-lg">
           HireLoop connects top talent with world-class companies. Browse
           thousands of curated opportunities and land your next role faster.
         </p>

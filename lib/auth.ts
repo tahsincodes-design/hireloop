@@ -1,12 +1,10 @@
 import { betterAuth } from "better-auth"
 import { APIError } from "better-auth/api"
 import { mongodbAdapter } from "@better-auth/mongo-adapter"
-import { MongoClient } from "mongodb"
 import { createHash, timingSafeEqual } from "node:crypto"
 
 import { isUserRole, USER_ROLES } from "@/lib/roles"
-
-const MONGO_DB_NAME = process.env.MONGO_DB_NAME ?? "hireloopdb"
+import { getDatabase, getMongoClient } from "@/lib/server/mongodb"
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value)
@@ -25,30 +23,8 @@ function isValidAdminInviteCode(value: unknown) {
   return timingSafeEqual(providedHash, expectedHash)
 }
 
-/**
- * Reuse one MongoClient across dev hot reloads. Next.js re-evaluates modules
- * on every change, and a fresh client per reload leaks connections until
- * MongoDB refuses new ones.
- */
-const globalForMongo = globalThis as unknown as {
-  mongoClient?: MongoClient
-}
-
-function getMongoClient() {
-  const uri = process.env.MONGO_DB_URI
-
-  if (!uri) {
-    throw new Error(
-      "MONGO_DB_URI is not set. Add it to .env before starting the auth server."
-    )
-  }
-
-  globalForMongo.mongoClient ??= new MongoClient(uri)
-  return globalForMongo.mongoClient
-}
-
 const client = getMongoClient()
-const db = client.db(MONGO_DB_NAME)
+const db = getDatabase()
 
 const github =
   process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
@@ -78,6 +54,16 @@ export const auth = betterAuth({
         required: false,
         defaultValue: "seeker",
         input: true,
+      },
+      /**
+       * Account moderation state. Never accepted from client input; only the
+       * server-side admin route may change it.
+       */
+      status: {
+        type: ["active", "suspended"],
+        required: false,
+        defaultValue: "active",
+        input: false,
       },
     },
   },
