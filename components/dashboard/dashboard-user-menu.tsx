@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import {
   Building2,
   ChevronDown,
+  Home,
   LogOut,
   Settings,
   UserRound,
@@ -133,9 +134,10 @@ export function DashboardUserMenu({
         <div className="px-2 py-1.5">
           <Link
             href="/"
-            className="text-[10px] text-white/25 underline-offset-4 transition-colors hover:text-white/50 hover:underline"
+            className="flex items-center gap-1.5 text-xs text-white/40 underline-offset-4 transition-colors hover:text-white/80 hover:underline"
           >
-            Back to HireLoop
+            <Home className="size-3.5" aria-hidden="true" />
+            Back to Home
           </Link>
         </div>
       </DropdownMenuContent>

@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Menu, Search } from "lucide-react"
+import { Home, Menu, Search } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -75,7 +76,10 @@ export function DashboardHeader({
 
         <div className="min-w-0 flex-1">
           <p className="hidden text-[10px] font-medium tracking-[0.16em] text-white/25 uppercase sm:block">
-            Dashboard
+            <Link href="/" className="transition-colors hover:text-white/60">
+              Home
+            </Link>{" "}
+            / Dashboard
           </p>
           <h1 className="truncate font-manrope text-[15px] font-semibold text-white sm:text-base">
             {pageTitle}
@@ -101,6 +105,18 @@ export function DashboardHeader({
         </form>
 
         <div className="flex items-center gap-0.5 sm:gap-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            nativeButton={false}
+            className="text-white/45 hover:bg-white/[0.06] hover:text-white"
+            title="Go to Home"
+            render={
+              <Link href="/" aria-label="Go to Home page">
+                <Home className="size-4" aria-hidden="true" />
+              </Link>
+            }
+          />
           <NotificationBell
             role={role}
             unreadCount={unreadCount}

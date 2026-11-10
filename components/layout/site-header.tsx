@@ -24,6 +24,7 @@ import {
 import { authClient } from "@/lib/auth-client"
 
 const NAV_LINKS = [
+  { href: "/", label: "Home" },
   { href: "/jobs", label: "Browse Jobs" },
   { href: "/companies", label: "Company" },
   { href: "/pricing", label: "Pricing" },
@@ -88,11 +89,15 @@ export function SiteHeader() {
           <NavigationMenu aria-label="Primary">
             <NavigationMenuList className="gap-1">
               {NAV_LINKS.map((link) => {
-                const isActive = pathname.startsWith(link.href)
+                const isActive =
+                  link.href === "/"
+                    ? pathname === "/"
+                    : pathname.startsWith(link.href)
                 return (
                   <NavigationMenuItem key={link.href}>
                     <NavigationMenuLink
-                      href={link.href}
+                      render={<Link href={link.href} />}
+                      active={isActive}
                       data-active={isActive}
                       className="text-sm text-white/80 hover:bg-white/10 hover:text-white data-active:bg-white/10 data-active:text-white"
                     >
@@ -199,7 +204,10 @@ export function SiteHeader() {
 
               <nav className="flex flex-col gap-1 px-4" aria-label="Mobile">
                 {NAV_LINKS.map((link) => {
-                  const isActive = pathname.startsWith(link.href)
+                  const isActive =
+                    link.href === "/"
+                      ? pathname === "/"
+                      : pathname.startsWith(link.href)
                   return (
                     <Link
                       key={link.href}

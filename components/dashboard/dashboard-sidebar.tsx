@@ -8,6 +8,7 @@ import {
   Building2,
   ChevronLeft,
   ChevronRight,
+  Home,
   LogOut,
   Settings,
   UserRound,
@@ -92,10 +93,11 @@ function SidebarBody({
         )}
       >
         <Link
-          href="/dashboard"
+          href="/"
           onClick={onNavigate}
           className="flex min-w-0 items-center gap-2.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/50"
-          aria-label="HireLoop dashboard"
+          aria-label="HireLoop home"
+          title="HireLoop home"
         >
           {collapsed ? (
             <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-indigo-500 text-sm font-bold text-white shadow-lg shadow-indigo-500/20">
@@ -146,6 +148,28 @@ function SidebarBody({
         className="flex-1 overflow-y-auto px-2.5 py-4"
         aria-label="Dashboard navigation"
       >
+        <div className="mb-3">
+          <Link
+            href="/"
+            onClick={onNavigate}
+            title={collapsed ? "Go to Home" : undefined}
+            className={cn(
+              "group relative flex items-center rounded-lg text-[13px] font-medium transition-colors",
+              collapsed
+                ? "mx-auto size-10 justify-center text-white/50 hover:bg-white/[0.045] hover:text-white"
+                : "gap-2.5 px-2.5 py-2 text-white/60 hover:bg-white/[0.045] hover:text-white"
+            )}
+          >
+            <Home
+              className="size-4 shrink-0 text-white/40 group-hover:text-white/80"
+              aria-hidden="true"
+            />
+            {!collapsed ? (
+              <span className="min-w-0 flex-1 truncate">Home</span>
+            ) : null}
+          </Link>
+        </div>
+
         <div className="space-y-5">
           {groups.map((group) => (
             <div key={group.label}>
@@ -226,6 +250,15 @@ function SidebarBody({
         {collapsed ? (
           <div className="flex flex-col items-center gap-1">
             <Link
+              href="/"
+              onClick={onNavigate}
+              title="Go to Home"
+              className="flex size-8 items-center justify-center rounded-lg text-white/35 transition-colors hover:bg-white/[0.06] hover:text-white"
+            >
+              <Home className="size-3.5" aria-hidden="true" />
+              <span className="sr-only">Home</span>
+            </Link>
+            <Link
               href={profileHref(role)}
               onClick={onNavigate}
               title={user.name}
@@ -275,6 +308,14 @@ function SidebarBody({
               </Button>
             </div>
             <div className="mt-2 flex gap-1 border-t border-white/6 pt-2">
+              <Link
+                href="/"
+                onClick={onNavigate}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-[11px] text-white/45 transition-colors hover:bg-white/[0.05] hover:text-white/80"
+              >
+                <Home className="size-3" aria-hidden="true" />
+                Home
+              </Link>
               <Link
                 href={profileHref(role)}
                 onClick={onNavigate}
