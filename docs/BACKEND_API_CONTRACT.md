@@ -30,11 +30,16 @@ session.
 
 ### Configuration
 
-| Variable                   | Where            | Meaning                                               |
-| -------------------------- | ---------------- | ----------------------------------------------------- |
-| `NEXT_PUBLIC_API_BASE_URL` | `.env.local`     | Express origin. Blank → `http://localhost:5000`.       |
-| `BETTER_AUTH_SECRET`       | `.env` (secret)  | Better Auth secret; also used as the HMAC signing key. |
-| `BETTER_AUTH_URL`          | `.env`           | Better Auth base URL.                                  |
+| Variable                    | Where           | Meaning                                                |
+| --------------------------- | --------------- | ------------------------------------------------------ |
+| `NEXT_PUBLIC_API_BASE_URL`  | `.env`          | Express origin. Blank → `http://localhost:5000`.        |
+| `BETTER_AUTH_SECRET`        | `.env` (secret) | Better Auth secret; also used as the HMAC signing key.  |
+| `BETTER_AUTH_URL`           | `.env`          | Better Auth base URL.                                   |
+| `STRIPE_SECRET_KEY`         | `.env` (secret) | Server-side Stripe key used to create Checkout Sessions. |
+| `STRIPE_RECRUITER_PRICE_ID` | `.env`          | Optional override for the Recruiter Growth Price ID.    |
+
+This project uses one `.env` file. Do not add `.env.local` or per-environment
+env files; everything is read from `.env`.
 
 Rules:
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { ArrowLeft, Check, Sparkles } from "lucide-react"
 
+import { PayButton } from "@/components/pricing/pay-button"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
@@ -19,6 +20,7 @@ const TIERS = [
     featured: false,
     cta: "Get Started Free",
     href: "/sign-up",
+    plan: null,
     features: [
       "Unlimited job browsing and search",
       "Save up to 50 active jobs",
@@ -35,6 +37,7 @@ const TIERS = [
     featured: true,
     cta: "Start 14-Day Free Trial",
     href: "/sign-up",
+    plan: "recruiter",
     features: [
       "Post up to 10 active job listings",
       "Unlimited candidate applications review",
@@ -53,6 +56,7 @@ const TIERS = [
     featured: false,
     cta: "Contact Sales",
     href: "/sign-in",
+    plan: null,
     features: [
       "Unlimited job listings & team members",
       "Dedicated recruitment account manager",
@@ -64,7 +68,13 @@ const TIERS = [
   },
 ] as const
 
-export default function PricingPage() {
+export default async function PricingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ canceled?: string }>
+}) {
+  const { canceled } = await searchParams
+
   return (
     <main className="min-h-svh bg-[#05050a] px-4 pt-28 pb-20 text-white sm:px-6 lg:px-8">
       {/* Glow */}
@@ -102,65 +112,85 @@ export default function PricingPage() {
           </p>
         </div>
 
-        <div className="mt-12 grid gap-6 lg:grid-cols-3">
-          {TIERS.map((tier) => (
-            <div
-              key={tier.name}
-              className={
-                tier.featured
-                  ? "relative flex flex-col justify-between rounded-3xl border-2 border-[#6366f1] bg-[#0c0c16] p-7 shadow-2xl shadow-indigo-500/20"
-                  : "flex flex-col justify-between rounded-3xl border border-white/10 bg-[#0a0a12]/80 p-7 shadow-lg backdrop-blur-md"
-              }
-            >
-              <div>
-                {tier.featured && (
-                  <span className="mb-3 inline-block rounded-full bg-[#6366f1] px-3 py-1 text-[10px] font-semibold tracking-wider text-white uppercase">
-                    Most Popular
-                  </span>
-                )}
-                <h3 className="font-manrope text-xl font-bold text-white">
-                  {tier.name}
-                </h3>
-                <p className="mt-1.5 text-xs text-white/50">
-                  {tier.description}
-                </p>
+        {canceled && (
+          <p
+            role="status"
+            className="mx-auto mt-8 max-w-xl rounded-xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-center text-xs text-amber-200/90"
+          >
+            Checkout canceled — you have not been charged. Pick a plan whenever
+            you are ready.
+          </p>
+        )}
 
-                <div className="mt-6 flex items-baseline gap-1">
-                  <span className="font-manrope text-4xl font-extrabold text-white">
-                    {tier.price}
-                  </span>
-                  <span className="text-xs text-white/45">/{tier.period}</span>
+        <div className="mt-12 grid gap-6 lg:grid-cols-3">
+          {TIERS.map((tier) => {
+            const ctaClassName = tier.featured
+              ? "w-full bg-[#6366f1] text-white hover:bg-[#5558e6]"
+              : "w-full border-white/15 bg-white/5 text-white hover:bg-white/10"
+
+            return (
+              <div
+                key={tier.name}
+                className={
+                  tier.featured
+                    ? "relative flex flex-col justify-between rounded-3xl border-2 border-[#6366f1] bg-[#0c0c16] p-7 shadow-2xl shadow-indigo-500/20"
+                    : "flex flex-col justify-between rounded-3xl border border-white/10 bg-[#0a0a12]/80 p-7 shadow-lg backdrop-blur-md"
+                }
+              >
+                <div>
+                  {tier.featured && (
+                    <span className="mb-3 inline-block rounded-full bg-[#6366f1] px-3 py-1 text-[10px] font-semibold tracking-wider text-white uppercase">
+                      Most Popular
+                    </span>
+                  )}
+                  <h3 className="font-manrope text-xl font-bold text-white">
+                    {tier.name}
+                  </h3>
+                  <p className="mt-1.5 text-xs text-white/50">
+                    {tier.description}
+                  </p>
+
+                  <div className="mt-6 flex items-baseline gap-1">
+                    <span className="font-manrope text-4xl font-extrabold text-white">
+                      {tier.price}
+                    </span>
+                    <span className="text-xs text-white/45">
+                      /{tier.period}
+                    </span>
+                  </div>
+
+                  <ul className="mt-8 space-y-3">
+                    {tier.features.map((feature) => (
+                      <li
+                        key={feature}
+                        className="flex items-start gap-2.5 text-xs text-white/70"
+                      >
+                        <Check
+                          className="mt-0.5 size-3.5 shrink-0 text-[#6366f1]"
+                          aria-hidden="true"
+                        />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
 
-                <ul className="mt-8 space-y-3">
-                  {tier.features.map((feature) => (
-                    <li
-                      key={feature}
-                      className="flex items-start gap-2.5 text-xs text-white/70"
-                    >
-                      <Check
-                        className="mt-0.5 size-3.5 shrink-0 text-[#6366f1]"
-                        aria-hidden="true"
-                      />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="mt-8 border-t border-white/10 pt-6">
+                  {tier.plan ? (
+                    <PayButton plan={tier.plan} className={ctaClassName}>
+                      {tier.cta}
+                    </PayButton>
+                  ) : (
+                    <Button
+                      nativeButton={false}
+                      className={ctaClassName}
+                      render={<Link href={tier.href}>{tier.cta}</Link>}
+                    />
+                  )}
+                </div>
               </div>
-
-              <div className="mt-8 border-t border-white/10 pt-6">
-                <Button
-                  nativeButton={false}
-                  className={
-                    tier.featured
-                      ? "w-full bg-[#6366f1] text-white hover:bg-[#5558e6]"
-                      : "w-full border-white/15 bg-white/5 text-white hover:bg-white/10"
-                  }
-                  render={<Link href={tier.href}>{tier.cta}</Link>}
-                />
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         <div className="mt-16 text-center">
